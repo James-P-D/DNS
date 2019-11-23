@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "${workspaceRoot}/DNS.rb",
             // Put following line back in and change arguments if you want to debug from VSCode
-            "args": ["192.168.0.1", "news.bbc.co.uk"]
+            "args": ["192.168.0.1", "cam.ac.uk"]
         }
     ]
 }
