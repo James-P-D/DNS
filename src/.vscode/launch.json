@@ -1,0 +1,16 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug Local File",
+            "type": "Ruby",
+            "request": "launch",
+            "program": "${workspaceRoot}/DNS.rb",
+            // Put following line back in and change arguments if you want to debug from VSCode
+            "args": ["192.168.0.1", "news.bbc.co.uk"]
+        }
+    ]
+}
