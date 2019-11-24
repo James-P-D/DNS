@@ -66,24 +66,6 @@ def create_packet(lookup_host, transaction_ID)
 end
 
 ##################################################################
-#
-##################################################################
-
-def decode_lookup_host_buffer(data_received)
-  str = ""
-  length = data_received.unpack("C")
-  while length != 0 do
-    for i in 0..length-1
-      str += data_received.unpack("C")
-    end
-    length = data_received.unpack("C")
-    if length != 0
-      str += "."
-    end
-  end
-end
-
-##################################################################
 # parse_response_packet(data_received) - Parse the received data #
 # into an array of answers                                       #
 ##################################################################
@@ -91,9 +73,9 @@ end
 def parse_response_packet(data_received)
   begin
     answers = Array.new
-    transaction_ID, flags, questions, answers, authority_rrs, additional_rrs = data_received.unpack("S>S>S>S>S>S>")
+    transaction_ID, flags, questions, answers, authority_rrs, additional_rrs, lookup_host = data_received.unpack("S>S>S>S>S>S>Z*")
     lookup_host = decode_lookup_host_buffer(data_received)
-    
+
     #answer = OpenStruct.new
     #answer.type = "foo"
     #answer.time_to_live = 123
