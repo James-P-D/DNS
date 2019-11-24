@@ -30,13 +30,13 @@ def usage()
 end
 
 ##################################################################
-# create_lookup_host_buffer(lookup_host) - Converts the hostname #
-# into a string where each period is replaced with a byte        #
-# specifying the length of the next string. e.g. news.bbc.co.uk  #
-# goes to {4}new{3}bbc{2}co{2}uk{0}                              #
+# encode_lookup_host(lookup_host) - Converts the hostname into a #
+# string where each period is replaced with a byte specifying    #
+# the length of the next string. e.g. news.bbc.co.uk goes to     #
+# {4}new{3}bbc{2}co{2}uk{0}                                      #
 ##################################################################
 
-def create_lookup_host_buffer(lookup_host)
+def encode_lookup_host(lookup_host)
   # Split the input by periods  
   tokens = lookup_host.split(".")
 
@@ -59,10 +59,52 @@ end
 
 def create_packet(lookup_host, transaction_ID)  
   packet = [transaction_ID, FLAGS, QUESTIONS, ANSWERS, AUTHORITY_RRS, ADDITIONAL_RRS].pack("S>S>S>S>S>S>")
-  packet += create_lookup_host_buffer(lookup_host)
+  packet += encode_lookup_host(lookup_host)
   packet += [TYPE_A, CLASS_IN].pack("S>S>")
   
   return packet
+end
+
+##################################################################
+#
+##################################################################
+
+def decode_lookup_host_buffer(data_received)
+  str = ""
+  length = data_received.unpack("C")
+  while length != 0 do
+    for i in 0..length-1
+      str += data_received.unpack("C")
+    end
+    length = data_received.unpack("C")
+    if length != 0
+      str += "."
+    end
+  end
+end
+
+##################################################################
+# parse_response_packet(data_received) - Parse the received data #
+# into an array of answers                                       #
+##################################################################
+
+def parse_response_packet(data_received)
+  begin
+    answers = Array.new
+    transaction_ID, flags, questions, answers, authority_rrs, additional_rrs = data_received.unpack("S>S>S>S>S>S>")
+    lookup_host = decode_lookup_host_buffer(data_received)
+    
+    #answer = OpenStruct.new
+    #answer.type = "foo"
+    #answer.time_to_live = 123
+    #answer.address = "bar"
+    
+    #answers.push(answer)
+  rescue
+    puts "Unable to parse response"
+    return nil
+  end
+  return answers
 end
 
 ##################################################################
@@ -84,29 +126,34 @@ def main()
   for i in 1..(ARGV.length - 1)
     lookup_hosts.push(ARGV[i])
   end
-
-  transaction_ID = 0
+  
   # Note that despite the DNS RFC suggesting that a single packet
   # can query multiple hosts, infact this just doesn't work :/
   # See https://stackoverflow.com/questions/4082081/requesting-a-and-aaaa-records-in-single-dns-query/4083071#4083071
   # for more details
   
+  transaction_ID = 0
   for lookup_host in lookup_hosts
     begin
       packet = create_packet(lookup_host, transaction_ID)
-      sender_socket = UDPSocket.new()
-      sender_socket.send(packet, 0, domain_host, DOMAIN_PORT)
-      sender_port = sender_socket.addr[1]
+      socket = UDPSocket.new()
+      socket.send(packet, 0, domain_host, DOMAIN_PORT)      
       puts("'%s' DNS query sent to '%s'" % [lookup_host, domain_host])
-      if sender_socket != nil
-        sender_socket.close
+      
+      data, client = socket.recvfrom(1024)      
+      answers = parse_response_packet(data)
+
+      if answers != nil
       end
 
+      if socket != nil
+        socket.close
+      end
     rescue
       puts("Unable to send packet to '%s'" % domain_host)
-      if sender_socket != nil
-        sender_socket.close
-      end
+      if socket != nil
+        socket.close
+      end    
     end
 
     transaction_ID += 1
