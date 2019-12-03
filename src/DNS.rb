@@ -5,7 +5,7 @@
 require 'socket'
 
 ##################################################################
-# Global Variables                                               #
+# Globals                                                        #
 ##################################################################
 
 DOMAIN_PORT = 53
@@ -18,6 +18,21 @@ NULL = 0x00
 TYPE_A = 0x0001
 CLASS_IN = 0x0001
 TYPE_C_NAME = 0x0005
+
+##################################################################
+# Global Variables                                               #
+##################################################################
+
+# Lookup dictionary DNS type responses
+# (stolen from packet-dns.c in WireShark)
+$response_type_lookup = { 
+  01 => "A (Host Address)",
+  02 => "NS (authoritative Name Server)",
+  03 => "MD (Mail Destination)",
+  04 => "MF (Mail Forwarder)",
+  05 => "CNAME (Canonical NAME for an alias)", 
+}
+
 
 ##################################################################
 # usage() - Tells user what parameters are available             #
@@ -153,15 +168,15 @@ def parse_response_packet(data_received)
       answer_name, answer_type, answer_class, answer_time_to_live, answer_data_length = data_received.slice(answer_offset, data_received.length - offset).unpack("S>S>S>L>S>")
       answer_offset += (2 * 3) + (1 * 4) + (2 * 1)
       answer_host = parse_answer_host(data_received, answer_offset, answer_data_length, answer_type)
-      puts answer_host
       answer_offset += answer_data_length
+
+      answer = OpenStruct.new
+      answer.type = answer_type
+      answer.time_to_live = answer_time_to_live
+      answer.address = answer_host
+      answers_received.push(answer)
     end
-    #answer = OpenStruct.new
-    #answer.type = "foo"
-    #answer.time_to_live = 123
-    #answer.address = "bar"
     
-    #answers_received.push(answer)
   rescue
     puts "Unable to parse response"
     return nil
@@ -200,12 +215,23 @@ def main()
       packet = create_packet(lookup_host, transaction_ID)
       socket = UDPSocket.new()
       socket.send(packet, 0, domain_host, DOMAIN_PORT)      
-      puts("'%s' DNS query sent to '%s'" % [lookup_host, domain_host])
+      puts("Query %s sent to %s" % [lookup_host, domain_host])
       
       data, client = socket.recvfrom(1024)      
       answers = parse_response_packet(data)
 
       if answers != nil
+        for answer in answers
+          type_name = $response_type_lookup[answer.type]
+          if type_name == nil
+            type_name = "UNKNOWN"
+          end
+
+          puts("Response:")
+          puts("\tType:\t%d\t(%s)" % [answer.type, type_name])
+          puts("\tTTL:\t%d" % [answer.time_to_live])
+          puts("\tName:\t%s" % [answer.address])
+        end
       end
 
       if socket != nil
@@ -219,6 +245,8 @@ def main()
     end
 
     transaction_ID += 1
+    
+    puts("")
   end
   
   puts "Complete."
