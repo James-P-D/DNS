@@ -1,11 +1,14 @@
 # DNS
-A simple command-line Domain Name System tool in Ruby using raw UDP packets
+A simple command-line [Domain Name System (DNS)](https://en.wikipedia.org/wiki/Domain_Name_System) tool in Ruby using raw UDP packets
 
 ![Screenshot](https://github.com/James-P-D/DNS/blob/master/screenshot.gif)
 
 ## Usage
 
 ```
+C:\Users\jdorr\Desktop\Dev\DNS\src>ruby -v
+ruby 2.6.5p114 (2019-10-01 revision 67812) [x64-mingw32]
+
 C:\Users\jdorr\Desktop\Dev\DNS\src>ruby DNS.rb
 ruby DNS.rb domain-host lookup-host1..lookup-hostN
 e.g. ruby DNS.rb 192.168.0.1 news.bbc.co.uk
