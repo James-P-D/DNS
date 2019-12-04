@@ -9,6 +9,7 @@ require "ostruct"
 # Globals                                                        #
 ##################################################################
 
+TIMEOUT = 5 
 DOMAIN_PORT = 53
 FLAGS = 0x0100
 QUESTIONS = 0x0001
@@ -215,26 +216,30 @@ def main()
     begin
       packet = create_packet(lookup_host, transaction_ID)
       socket = UDPSocket.new()
-      socket.send(packet, 0, domain_host, DOMAIN_PORT)      
+      resp = socket.send(packet, 0, domain_host, DOMAIN_PORT)
       puts("Query %s sent to %s" % [lookup_host, domain_host])
       
-      data, client = socket.recvfrom(1024)      
-      answers = parse_response_packet(data)
+      resp = if select([socket], nil, nil, TIMEOUT)
+        data, client = socket.recvfrom(1024)      
+        answers = parse_response_packet(data)
 
-      if answers != nil
-        for answer in answers
-          type_name = $response_type_lookup[answer.type]
-          if type_name == nil
-            type_name = "UNKNOWN"
+        if answers != nil
+          for answer in answers
+            type_name = $response_type_lookup[answer.type]
+            if type_name == nil
+              type_name = "UNKNOWN"
+            end
+
+            puts("Response:")
+            puts("\tType:\t%d\t(%s)" % [answer.type, type_name])
+            puts("\tTTL:\t%d" % [answer.time_to_live])
+            puts("\tName:\t%s" % [answer.address])
           end
-
-          puts("Response:")
-          puts("\tType:\t%d\t(%s)" % [answer.type, type_name])
-          puts("\tTTL:\t%d" % [answer.time_to_live])
-          puts("\tName:\t%s" % [answer.address])
         end
+      else
+        puts "Timeout"
       end
-
+      
       if socket != nil
         socket.close
       end
