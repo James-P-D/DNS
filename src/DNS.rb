@@ -224,6 +224,7 @@ def main()
         answers = parse_response_packet(data)
 
         if answers != nil
+          puts("%d answers received" % [answers.length])
           for answer in answers
             type_name = $response_type_lookup[answer.type]
             if type_name == nil
@@ -239,7 +240,7 @@ def main()
       else
         puts "Timeout"
       end
-      
+
       if socket != nil
         socket.close
       end
