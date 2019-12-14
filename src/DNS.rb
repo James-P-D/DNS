@@ -97,18 +97,22 @@ def decode_host(data_received, answer_offset, answer_data_length)
   i = 0
   while i <answer_data_length
     byte_read = data_received.slice(answer_offset + i, data_received.length - (answer_offset + i)).unpack("C")
+    
     if(byte_read[0] == 0)
       break
+    elsif(byte_read[0] & 0xC0 == 0xC0)
+      i = i + 1
+      byte_read = data_received.slice(answer_offset + i, data_received.length - (answer_offset + i)).unpack("C")
     end
 
     i = i + 1
-    for j in 0..(byte_read[0]-1)
+    for j in 0..(byte_read[0] - 1)
       char_read = data_received.slice(answer_offset + i, data_received.length - (answer_offset + i)).unpack("C")
       i = i + 1
       host_str << char_read[0].chr()
     end
 
-    if i < answer_data_length -1
+    if i < answer_data_length - 1
       host_str << "."
     end
   end
