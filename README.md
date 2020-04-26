@@ -1,5 +1,5 @@
 # DNS
-A simple command-line [Domain Name System (DNS)](https://en.wikipedia.org/wiki/Domain_Name_System) tool in Ruby using raw UDP packets
+A simple command-line [Domain Name System (DNS)](https://en.wikipedia.org/wiki/Domain_Name_System) tool in Ruby (v2.6.5p114) using raw UDP packets
 
 ![Screenshot](https://github.com/James-P-D/DNS/blob/master/screenshot.gif)
 
